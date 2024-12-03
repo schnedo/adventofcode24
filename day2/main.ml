@@ -6,17 +6,19 @@ let record_lines = read_lines "day2/input.txt"
 let record_line_to_record (line : string) =
   List.map int_of_string @@ String.split_on_char ' ' line
 
-let rec diffs (record : int list) =
-  match record with
-  | first :: second :: tail -> (first - second) :: diffs (second :: tail)
-  | _ -> []
+let safe_increasing (diff : int) = diff > 0 && diff < 4
+let safe_decreasing (diff : int) = diff < 0 && diff > -4
 
-let is_increasing = List.for_all (fun num -> num > 0 && num < 4)
-let is_decreasing = List.for_all (fun num -> num < 0 && num > -4)
+let rec is (safe_direction : int -> bool) (record : int list) =
+  match record with
+  | first :: second :: tail ->
+      let diff = second - first in
+      if not @@ safe_direction diff then false
+      else is safe_direction @@ (second :: tail)
+  | _ -> true
 
 let is_safe (record : int list) =
-  let d = diffs record in
-  is_increasing d || is_decreasing d
+  is safe_decreasing record || is safe_increasing record
 
 let records = List.map record_line_to_record record_lines
 let safe_records = List.filter is_safe records
