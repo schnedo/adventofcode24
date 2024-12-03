@@ -8,45 +8,52 @@ let read_lines : string -> string list =
 
 let record_lines = read_lines "day2/input.txt"
 
-let print_record =
-  List.iter (fun n ->
-      print_int n;
-      print_char ' ')
-
 let record_line_to_record (line : string) =
   List.map int_of_string @@ String.split_on_char ' ' line
 
 let safe_increasing (diff : int) = diff > 0 && diff < 4
 let safe_decreasing (diff : int) = diff < 0 && diff > -4
 
-let rec is (safe_direction : int -> bool) ?(try_again = true)
-    (record : int list) =
+let rec is (safe_step : int -> bool) ?(try_again = true) (record : int list) =
   match record with
   | first :: second :: tail -> (
       let diff = second - first in
-      match (safe_direction diff, try_again) with
-      | true, _ -> is safe_direction ~try_again (second :: tail)
-      | false, true -> is safe_direction ~try_again:false (first :: tail)
+      match (safe_step diff, try_again) with
+      | true, _ -> is safe_step ~try_again (second :: tail)
+      | false, true -> is safe_step ~try_again:false (first :: tail)
       | false, false -> false)
   | _ -> true
 
+let is_safe_single_try (record : int list) =
+  is safe_decreasing ~try_again:false record
+  || is safe_increasing ~try_again:false record
+
 let is_safe (record : int list) =
   is safe_decreasing record || is safe_increasing record
+  || match record with [] -> true | _ :: tail -> is_safe_single_try tail
 
 let records = List.map record_line_to_record record_lines
 let safe_records = List.filter is_safe records
 
+let suspiciously_safe_records =
+  List.filter (fun record -> not @@ is_safe_single_try record) safe_records
+
+let print_record =
+  List.iter (fun n ->
+      print_int n;
+      print_char ' ')
+
 let () =
+  (*List.iter*)
+  (*  (fun record ->*)
+  (*    print_record record;*)
+  (*    print_newline ())*)
+  (*  records;*)
+  (*print_newline ();*)
   List.iter
     (fun record ->
       print_record record;
       print_newline ())
-    records;
-  print_newline ();
-  List.iter
-    (fun record ->
-      print_record record;
-      print_newline ())
-    safe_records;
+    suspiciously_safe_records;
   print_newline ();
   string_of_int @@ List.length safe_records |> print_endline
